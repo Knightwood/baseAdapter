@@ -1,20 +1,113 @@
+# 新增特性
+
+1. 可以干预viewholder的创建
+2. 使用kotlin编写了便捷方法
+
+* 多种viewholder情况：
+
+```
+fun initRV() {
+        //预定义数据，实际项目中可以传入空list初始化
+        val datas: MutableList<String> = mutableListOf()
+        datas.addAll(listOf("a", "b", "c"))
+        //item种类
+        val delegates =
+            arrayOf(DelegatePair<String>(1, delegate1()), DelegatePair<String>(2, delegate2()))
+        //recyclerview
+        val rv = findViewById<View>(R.id.rv) as RecyclerView
+        //初始化recyclerview
+        val rvHolder = RecyclerViewX(
+            rv = rv,
+            context = this,
+            lmType = LayoutManagerType.getLinearLayoutManager(RecyclerView.VERTICAL),
+            adapterDelegates = delegates,
+            data = datas,
+            createHolder = { context, parent, layoutId ->
+                //自定义处理创建viewholder，也可以传null使用默认方法创建
+                return@RecyclerViewX ViewHolder.createViewHolder(context, parent, layoutId)
+            },
+            config = { layoutManager ->
+                //做一些其他处理
+                layoutManager.apply {
+
+                }
+            }) {
+            rv.addItemDecoration(
+                DividerItemDecoration(
+                    context,
+                    DividerItemDecoration.HORIZONTAL
+                )
+            )
+            adapter.clickEvent { view, holder, position ->
+                Toast.makeText(
+                    this@MainActivity.applicationContext,
+                    "点击事件${adapter.datas[position]}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+        //更新数据
+        rvHolder.update(datas)
+    }
+```
+
+* 单一viewholder情况
+
+```
+//单个类型item
+    fun initRV1_1() {
+        val adapter = object : CommonAdapter<String>(
+            this,
+            android.R.layout.simple_list_item_1,
+            Arrays.asList("a", "b", "c")
+        ) {
+            //非必须重写，这个可以自己控制viewholder的创建
+            override fun createHolderInternal(
+                context: Context,
+                parent: ViewGroup,
+                layoutId: Int
+            ): ViewHolder {
+                return super.createHolderInternal(context, parent, layoutId)
+            }
+
+            override fun convert(holder: ViewHolder?, t: String?, position: Int) {
+                holder!!.setText(android.R.id.text1, t)
+            }
+        }
+
+        RecyclerViewX(
+            findViewById<View>(R.id.rv) as RecyclerView,
+            this,
+            LayoutManagerType.getLinearLayoutManager(RecyclerView.VERTICAL),
+            adapter
+        )
+
+    }
+```
+
+
+
 # base-adapter
-Android 万能的Adapter for ListView,RecyclerView,GridView等，支持多种Item类型的情况。
+
+Android 万能的Adapter for RecyclerView,  ~~ListView, GridView~~等，支持多种Item类型的情况。已添加androidX支持。
 
 
 ## 引入
 
-### ForRecyclerView
+ 1.引入jitpack
+ ```
+ allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+ ```
+2.添加以下库
+```
+implementation 'com.github.Knightwood:baseAdapter:dev-1.0'
+```
 
-```
-compile 'com.zhy:base-rvadapter:3.0.3'
-```
-
-### ForListView
-
-```
-compile 'com.zhy:base-adapter:3.0.3'
-```
 
 
 ## 使用
@@ -186,5 +279,4 @@ mListView.setAdapter(new CommonAdapter<String>(this, R.layout.item_list, mDatas)
 * [https://github.com/ragunathjawahar/simple-section-adapter](https://github.com/ragunathjawahar/simple-section-adapter)
 
     `SectionAdapter`对其进行了参考。
-
 
